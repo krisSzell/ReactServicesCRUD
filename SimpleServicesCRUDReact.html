@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Hello World</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/css/bootstrap.min.css" integrity="sha384-rwoIResjU2yc3z8GV/NPeZWAv56rSmLldC3R/AZzGRnGxQQKnKkoFVhFQhNUwEyJ" crossorigin="anonymous">
+    <script src="https://code.jquery.com/jquery-3.1.1.slim.min.js" integrity="sha384-A7FZj7v+d/sdmMqp/nOQwliLvUsJfDHW+k9Omg/a/EheAdgtzNs3hpfag6Ed950n" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tether/1.4.0/js/tether.min.js" integrity="sha384-DztdAPBWPRXSA/3eYEEUWrWCy7G5KFbe8fFjk5JAIxUYHKkDx6Qin1DkWx51bBrb" crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/js/bootstrap.min.js" integrity="sha384-vBWWzlZJ8ea9aCX4pEW3rVHjgjt7zpkNpZk+02D9phzyeVkE+jo0ieGizqPLForn" crossorigin="anonymous"></script>
+    <script src="https://unpkg.com/react@16/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@16/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/babel-standalone@6.15.0/babel.min.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+  </head>
+  <body>
+    <div style="margin-top: 2rem" id="root">
+    </div>
+    <script type="text/babel">
+
+    //   ReactDOM.render(
+    //     <h1>Hello, world!</h1>,
+    //     document.getElementById('root')
+    //   );
+
+    const Service = (props) => {
+	    let handleClick = () => {
+            console.log(props.service);
+  	        let url = 'http://krisszell-001-site1.dtempurl.com/api/Services/' + props.service.serviceId;
+        
+  	        axios({
+        	    method: 'DELETE',
+                url: url
+            }).then(() => {
+                props.delete(props.service.serviceId);
+                console.log("Deleted: " + props.service.serviceId);
+            });
+        };
+
+	    return(
+  	    <div className="card" style={{ width: 20 + 'rem' }}>
+        	<div className="card-block" style={{ padding: 1 + 'rem'}}>
+          	<h4 className="card-title">{props.service.name}</h4>
+            <p className="card-text" style={{ marginBottom: 0 }}>Price: {props.service.price} PLN</p>
+            <p className="card-text">Duration: {props.service.durationInMinutes} min</p>
+            <button className="btn btn-danger" onClick={handleClick} style={{ width: 50 + '%' }}>Delete</button>
+          </div>
+        </div>);
+    };
+
+    class ServiceForm extends React.Component {
+
+        clearForm = {
+            name: '',
+            price: '',
+            durationInMinutes: ''
+        };
+
+        constructor(props){
+            super(props);
+            this.state = {
+                formData: this.clearForm,
+                add: props.add
+            };
+        }; 
+
+        handleNameChange = (e) => {
+            let updatedFormData = {...this.state.formData};
+            updatedFormData.name = e.target.value;
+            this.setState({ formData: updatedFormData });
+        };
+        handlePriceChange = (e) => {
+            let updatedFormData = {...this.state.formData};
+            updatedFormData.price = e.target.value;
+            this.setState({ formData: updatedFormData });
+        };
+        handleDurationChange = (e) => {
+            let updatedFormData = {...this.state.formData};
+            updatedFormData.durationInMinutes = e.target.value;
+            this.setState({ formData: updatedFormData });
+        };
+        handleOnClick = () => {
+            console.log(this.state.formData);
+            let url = 'http://krisszell-001-site1.dtempurl.com/api/Services/';
+
+            axios.post(url, this.state.formData)
+                .then(() => {
+                let createdService = this.state.formData;
+                this.setState(prevState => ({ formData: this.clearForm }));
+                this.state.add(createdService);
+            });
+        };
+
+        render() {
+            return(
+            <div>
+                <h4>Add new:</h4>
+                <form>
+                    <div className="form-group">
+                      <label htmlFor="name">Name</label>
+                      <input type="text" 
+                        className="form-control" 
+                        id="name" 
+                        placeholder="Enter name"
+                        value={this.state.formData.name}
+                        onChange={this.handleNameChange} />
+                    </div>
+                    <div className="form-group">
+                      <label htmlFor="price">Price</label>
+                      <input type="text" 
+                             className="form-control" 
+                             id="price" 
+                             placeholder="Price"
+                             value={this.state.formData.price}
+                             onChange={this.handlePriceChange} />
+                    </div>
+                    <div className="form-group">
+                      <label htmlFor="durationInMinutes">Price</label>
+                      <input type="text" 
+                             className="form-control" 
+                             id="durationInMinutes" 
+                             placeholder="Duration (min)"
+                             value={this.state.formData.durationInMinutes}
+                             onChange={this.handleDurationChange} />
+                    </div>
+                    <button className="btn btn-primary" type="button" onClick={this.handleOnClick}>Add</button>
+                </form>    
+            </div>
+            );
+        };
+    };
+
+    const Services = (props) => {
+        return(
+            <div>
+               <h4>List of services</h4> 
+               {props.data.map(obj => <Service key={obj.serviceId} service={obj} delete={props.delete} />)}
+            </div>
+        );
+    };
+
+    class App extends React.Component {
+
+        constructor(props) {
+            super(props);
+
+            this.state = {
+                url: 'http://krisszell-001-site1.dtempurl.com/api/Services/',
+                services: []
+            }
+        }
+
+        componentWillMount() {
+            fetch(this.state.url)
+                .then(res => res.json())
+                .then(json => {
+                    this.setState({ services: json }); 
+                });
+        }
+
+        deleteService = (id) => {
+            this.setState(prevState => ({
+                services: prevState.services.filter(serv => serv.serviceId !== id)
+            }));
+        }
+
+        addService = (service) => {
+            this.setState(prevState => ({
+                services: prevState.services.concat(service)
+            }));
+        }
+
+        render() {
+            return (
+                <div className="row">
+                    <div className="col-4 offset-md-2">
+                        <Services data={this.state.services} delete={this.deleteService} />    
+                    </div>
+                    <div className="col-2" id="serviceForm">
+                        <ServiceForm add={this.addService} formData={{}} />    
+                    </div>
+                </div>
+            );
+        };
+    }
+
+    ReactDOM.render(<App />, document.getElementById('root'));
+
+    </script>
+  </body>
+</html>
